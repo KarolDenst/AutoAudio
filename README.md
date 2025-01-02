@@ -1,4 +1,5 @@
-# List of models to be tested:
+# List of models to be tested
+
 - SVM
 - KNN
 - CNN

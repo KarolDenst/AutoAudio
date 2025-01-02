@@ -3,21 +3,26 @@ import numpy as np
 import pandas as pd
 
 
-def aggregate_audio_features(file_df: pd.DataFrame) -> pd.DataFrame:
+def aggregate_audio_features(
+    file_df: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     n_mfcc = 13
 
     features = []
+    ys = []
     filenames = file_df["file_path"].tolist()
     for file_path in filenames:
-        feature = extract_audio_features(file_path, n_mfcc)
+        feature, y = extract_audio_features(file_path, n_mfcc)
         features.append(feature)
+        ys.append(y)
 
     df = pd.DataFrame(features, index=pd.Index(filenames))
-    return df
+    audios = pd.DataFrame({"audio": ys}, index=pd.Index(filenames))
+    return df, audios
 
 
-def extract_audio_features(file_path: str, n_mfcc: int = 13) -> dict:
-    y, sr = librosa.load(file_path)
+def extract_audio_features(file_path: str, n_mfcc: int = 13) -> tuple[dict, np.ndarray]:
+    y, sr = librosa.load(file_path, sr=16_000)
 
     mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc)
 
@@ -50,4 +55,4 @@ def extract_audio_features(file_path: str, n_mfcc: int = 13) -> dict:
         **{f"mfccs_{i}": mfccs_std[i] for i in range(len(mfccs_std))},
     }
 
-    return features
+    return features, y
