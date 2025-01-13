@@ -21,13 +21,13 @@ class AutoAudioModel:
         label2id = {}
         id2label = {}
         for i, label in enumerate(unique):
-            label2id[label] = str(i)
-            id2label[str(i)] = label
+            label2id[label] = i
+            id2label[i] = label
         return [
             AudioSVM(),
             AudioKNN(n_unique),
             AudioGB(),
-            # AudioTransformer(n_unique, label2id, id2label),
+            AudioTransformer(n_unique, label2id, id2label),
         ]
 
     # TODO: Make full use of the random state
@@ -73,8 +73,12 @@ class AutoAudioModel:
         best_accuracy = -1
         for model in self.models:
             print(f"Training {model}")
-            model.fit(features_train, labels_train)
-            predictions = model.predict(features_test)
+            if model.__class__.__name__ == "AudioTransformer":
+                model.fit(audios_train, audios_test)
+                predictions = model.predict(audios_test)
+            else:
+                model.fit(features_train, labels_train)
+                predictions = model.predict(features_test)
             accuracy = accuracy_score(labels_test, predictions)
             print(f"{model} achieved {accuracy * 100}% accuracy.")
 
@@ -105,5 +109,6 @@ class AutoAudioModel:
         if "file_path" not in data.columns:
             raise ValueError("DataFrame must contain 'file_path' column")
         features, audios = pre.aggregate_audio_features(data)
-
+        if self.best_model.__class__.__name__ == "AudioTransformer":
+            return self.best_model.predict(audios)
         return self.best_model.predict(features)

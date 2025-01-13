@@ -168,4 +168,6 @@ cython_debug/
 #.idea/
 
 data/
+outputs/
 examples/data/
+examples/outputs/

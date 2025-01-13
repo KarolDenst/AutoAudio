@@ -10,6 +10,8 @@ from transformers import (
 import pandas as pd
 import numpy as np
 import uuid
+from datasets import Dataset
+import torch
 
 
 # https://huggingface.co/docs/transformers/en/tasks/audio_classification
@@ -18,6 +20,8 @@ class AudioTransformer(AutoAudioBaseModel):
         self.feature_extractor = AutoFeatureExtractor.from_pretrained(
             "facebook/wav2vec2-base"
         )
+        self.label2id = label2id
+        self.id2label = id2label
         self.model = AutoModelForAudioClassification.from_pretrained(
             "facebook/wav2vec2-base",
             num_labels=num_labels,
@@ -25,9 +29,12 @@ class AudioTransformer(AutoAudioBaseModel):
             id2label=id2label,
         )
         self.id = str(uuid.uuid4())
-        self.path = ("outputs/transformer" + self.id,)
+        self.path = "outputs/transformer" + self.id
 
     def fit(self, train_dataset, test_dataset):
+        encoded_train_dataset = self.encode_dataset(train_dataset)
+        encoded_test_dataset = self.encode_dataset(test_dataset)
+
         training_args = TrainingArguments(
             output_dir=self.path,
             eval_strategy="epoch",
@@ -36,7 +43,7 @@ class AudioTransformer(AutoAudioBaseModel):
             per_device_train_batch_size=32,
             gradient_accumulation_steps=4,
             per_device_eval_batch_size=32,
-            num_train_epochs=10,
+            num_train_epochs=1,  # TODO: change this back to something larger like 10
             warmup_ratio=0.1,
             logging_steps=10,
             load_best_model_at_end=True,
@@ -55,23 +62,45 @@ class AudioTransformer(AutoAudioBaseModel):
         trainer = Trainer(
             model=self.model,
             args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=test_dataset,
+            train_dataset=encoded_train_dataset,
+            eval_dataset=encoded_test_dataset,
             processing_class=self.feature_extractor,
             compute_metrics=compute_metrics,
         )
 
         trainer.train()
 
-    def predict(self, features: pd.DataFrame) -> np.ndarray:
-        # TODO: get features into correct format
+    def encode_dataset(self, df):
+        df["label"] = df["label"].map(self.label2id)
+        dataset = Dataset.from_pandas(df)
+
+        def preprocess_function(examples):
+            audio_arrays = examples["audio"]
+            inputs = self.feature_extractor(
+                audio_arrays,
+                sampling_rate=self.feature_extractor.sampling_rate,
+                max_length=16000,
+                truncation=True,
+            )
+            return inputs
+
+        encoded_dataset = dataset.map(
+            preprocess_function, remove_columns="audio", batched=True
+        )
+        return encoded_dataset
+
+    def predict(self, audios: pd.DataFrame) -> np.ndarray:
+        predictions = []
         with torch.no_grad():
-            logits = self.model(features["file_path"]).logits
-            predicted_class_ids = torch.argmax(
-                logits, dim=1
-            ).item()  # TODO: check if dim is correct
-            predicted_labels = self.model.config.id2label[predicted_class_ids]
-        return predicted_labels
+            for audio in audios["audio"]:
+                inputs = self.feature_extractor(
+                    audio, sampling_rate=16000, return_tensors="pt"
+                )
+                logits = self.model(**inputs).logits
+                predicted_class_ids = torch.argmax(logits).item()
+                predicted_label = self.model.config.id2label[predicted_class_ids]
+                predictions.append(predicted_label)
+        return np.array(predictions)
 
     def __str__(self) -> str:
         return "Transformer"

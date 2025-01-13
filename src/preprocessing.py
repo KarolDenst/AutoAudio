@@ -11,18 +11,37 @@ def aggregate_audio_features(
     features = []
     ys = []
     filenames = file_df["file_path"].tolist()
+    sr = 16000
     for file_path in filenames:
-        feature, y = extract_audio_features(file_path, n_mfcc)
+        feature, y = extract_audio_features(file_path, n_mfcc, sr)
         features.append(feature)
         ys.append(y)
 
     df = pd.DataFrame(features, index=pd.Index(filenames))
-    audios = pd.DataFrame({"audio": ys}, index=pd.Index(filenames))
+    if "label" in file_df.columns:
+        audios = pd.DataFrame(
+            {
+                "audio": ys,
+                "label": file_df["label"].tolist(),
+                "sampling_rate": [sr for _ in range(len(ys))],
+            },
+            index=pd.Index(filenames),
+        )
+    else:
+        audios = pd.DataFrame(
+            {
+                "audio": ys,
+                "sampling_rate": [sr for _ in range(len(ys))],
+            },
+            index=pd.Index(filenames),
+        )
     return df, audios
 
 
-def extract_audio_features(file_path: str, n_mfcc: int = 13) -> tuple[dict, np.ndarray]:
-    y, sr = librosa.load(file_path, sr=16_000)
+def extract_audio_features(
+    file_path: str, n_mfcc: int = 13, sr: int = 16000
+) -> tuple[dict, np.ndarray]:
+    y, sr = librosa.load(file_path, sr=sr)
 
     mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc)
 
