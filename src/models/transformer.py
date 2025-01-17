@@ -11,12 +11,15 @@ import pandas as pd
 import numpy as np
 import uuid
 from datasets import Dataset
-import torch
+from transformers import set_seed
 
 
 # https://huggingface.co/docs/transformers/en/tasks/audio_classification
 class AudioTransformer(AutoAudioBaseModel):
-    def __init__(self, num_labels: int, label2id: dict, id2label: dict):
+    def __init__(
+        self, num_labels: int, label2id: dict, id2label: dict, random_state: int
+    ):
+        set_seed(random_state)
         self.feature_extractor = AutoFeatureExtractor.from_pretrained(
             "facebook/wav2vec2-base"
         )
@@ -31,14 +34,13 @@ class AudioTransformer(AutoAudioBaseModel):
         self.id = str(uuid.uuid4())
         self.path = "outputs/transformer" + self.id
 
-    def fit(self, train_dataset, test_dataset):
+    def fit(self, train_dataset):
         encoded_train_dataset = self.encode_dataset(train_dataset)
-        encoded_test_dataset = self.encode_dataset(test_dataset)
 
         training_args = TrainingArguments(
             output_dir=self.path,
-            eval_strategy="epoch",
-            save_strategy="epoch",
+            eval_strategy="no",
+            save_strategy="no",
             learning_rate=3e-5,
             per_device_train_batch_size=32,
             gradient_accumulation_steps=4,
@@ -63,7 +65,6 @@ class AudioTransformer(AutoAudioBaseModel):
             model=self.model,
             args=training_args,
             train_dataset=encoded_train_dataset,
-            eval_dataset=encoded_test_dataset,
             processing_class=self.feature_extractor,
             compute_metrics=compute_metrics,
         )

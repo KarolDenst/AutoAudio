@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from models.base_model import AutoAudioBaseModel
 import preprocessing as pre
 from models.svm import AudioSVM
 from models.knn import AudioKNN
@@ -7,6 +8,7 @@ from models.xgb import AudioGB
 from models.transformer import AudioTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+import torch
 
 
 class AutoAudioModel:
@@ -14,7 +16,7 @@ class AutoAudioModel:
         self.models = []
         self.best_model = None
 
-    def _get_models(self, labels):
+    def _get_models(self, labels, random_state) -> list[AutoAudioBaseModel]:
         unique = np.unique(labels)
         n_unique = len(unique)
 
@@ -23,12 +25,16 @@ class AutoAudioModel:
         for i, label in enumerate(unique):
             label2id[label] = i
             id2label[i] = label
-        return [
-            AudioSVM(),
+        models = [
+            AudioSVM(random_state),
             AudioKNN(n_unique),
-            AudioGB(),
-            AudioTransformer(n_unique, label2id, id2label),
+            AudioGB(random_state),
         ]
+        if torch.cuda.is_available():
+            models.append(AudioTransformer(n_unique, label2id, id2label, random_state))
+        else:
+            print("Cuda not available. Not training transformer model.")
+        return models
 
     # TODO: Make full use of the random state
     def fit(self, data: pd.DataFrame, random_state: int = 42):
@@ -50,13 +56,15 @@ class AutoAudioModel:
 
         data.reset_index(drop=True, inplace=True)
         # TODO: maybe get multiple sets of features and test on each one
+        print("Preprocessing audio files.")
         features, audios = pre.aggregate_audio_features(data)
+        print("Finished preprocessing files.")
         features.reset_index(drop=True, inplace=True)
         audios.reset_index(drop=True, inplace=True)
         # TODO: add some feature reduction maybe
 
         labels = data["label"]
-        self.models = self._get_models(labels)
+        self.models = self._get_models(labels, random_state)
 
         test_size = 0.2
         indices = labels.index
@@ -74,7 +82,7 @@ class AutoAudioModel:
         for model in self.models:
             print(f"Training {model}")
             if model.__class__.__name__ == "AudioTransformer":
-                model.fit(audios_train, audios_test)
+                model.fit(audios_train)
                 predictions = model.predict(audios_test)
             else:
                 model.fit(features_train, labels_train)
@@ -86,6 +94,8 @@ class AutoAudioModel:
                 self.best_model = model
                 best_accuracy = accuracy
 
+        print("Finished training.")
+        print(f"Best model is: {str(self.best_model)}")
         # TODO: Fine tune best model
         # TODO: Maybe use ensamble of models
 

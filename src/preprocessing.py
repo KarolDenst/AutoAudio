@@ -1,40 +1,35 @@
 import librosa
 import numpy as np
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor
 
 
+# TODO: This fails for corrupted files. Fix it
 def aggregate_audio_features(
     file_df: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     n_mfcc = 13
-
-    features = []
-    ys = []
-    filenames = file_df["file_path"].tolist()
     sr = 16000
-    for file_path in filenames:
-        feature, y = extract_audio_features(file_path, n_mfcc, sr)
-        features.append(feature)
-        ys.append(y)
+    filenames = file_df["file_path"].tolist()
+
+    with ThreadPoolExecutor() as executor:
+        results = list(
+            executor.map(lambda f: extract_audio_features(f, n_mfcc, sr), filenames)
+        )
+
+    features, ys = zip(*results)
 
     df = pd.DataFrame(features, index=pd.Index(filenames))
-    if "label" in file_df.columns:
-        audios = pd.DataFrame(
-            {
-                "audio": ys,
-                "label": file_df["label"].tolist(),
-                "sampling_rate": [sr for _ in range(len(ys))],
-            },
-            index=pd.Index(filenames),
-        )
-    else:
-        audios = pd.DataFrame(
-            {
-                "audio": ys,
-                "sampling_rate": [sr for _ in range(len(ys))],
-            },
-            index=pd.Index(filenames),
-        )
+
+    audios = pd.DataFrame(
+        {
+            "audio": ys,
+            "label": file_df["label"].tolist() if "label" in file_df.columns else None,
+            "sampling_rate": sr,
+        },
+        index=pd.Index(filenames),
+    ).dropna(axis=1, how="all")  # Drop 'label' if it wasn't included
+
     return df, audios
 
 

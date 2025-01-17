@@ -5,8 +5,8 @@ import numpy as np
 
 
 class AudioGB(AutoAudioBaseModel):
-    def __init__(self):
-        self.model = GradientBoostingClassifier()
+    def __init__(self, random_state: int):
+        self.model = GradientBoostingClassifier(random_state=random_state)
 
     def fit(self, features: pd.DataFrame, labels: np.ndarray):
         self.model.fit(features, labels)
