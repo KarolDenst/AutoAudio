@@ -4,42 +4,60 @@ import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 
 
-# TODO: This fails for corrupted files. Fix it
 def aggregate_audio_features(
     file_df: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     n_mfcc = 13
     sr = 16000
     filenames = file_df["file_path"].tolist()
 
+    results = []
+    valid_filenames = []
+
     with ThreadPoolExecutor() as executor:
-        results = list(
-            executor.map(lambda f: extract_audio_features(f, n_mfcc, sr), filenames)
-        )
+        for filename, result in zip(
+            filenames,
+            executor.map(lambda f: extract_audio_features(f, n_mfcc, sr), filenames),
+        ):
+            if result is not None:
+                results.append(result)
+                valid_filenames.append(filename)
+
+    if not results:
+        return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 
     features, ys = zip(*results)
 
-    df = pd.DataFrame(features, index=pd.Index(filenames))
+    df = pd.DataFrame(features, index=pd.Index(valid_filenames))
 
     audios = pd.DataFrame(
         {
             "audio": ys,
-            "label": file_df["label"].tolist() if "label" in file_df.columns else None,
+            "label": file_df[file_df["file_path"].isin(valid_filenames)][
+                "label"
+            ].tolist()
+            if "label" in file_df.columns
+            else None,
             "sampling_rate": sr,
         },
-        index=pd.Index(filenames),
+        index=pd.Index(valid_filenames),
     ).dropna(axis=1, how="all")  # Drop 'label' if it wasn't included
 
-    return df, audios
+    labels = file_df[file_df["file_path"].isin(valid_filenames)]["label"]
+    return df, audios, labels
 
 
 def extract_audio_features(
     file_path: str, n_mfcc: int = 13, sr: int = 16000
-) -> tuple[dict, np.ndarray]:
-    y, sr = librosa.load(file_path, sr=sr)
+) -> tuple[dict, np.ndarray] | None:
+    try:
+        y, sr = librosa.load(file_path, sr=sr)
+    except Exception:
+        print("Corrupted audio file:", file_path)
+        print("Skipping this file")
+        return None
 
     mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc)
-
     spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
     spectral_bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr)
     spectral_rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
@@ -66,7 +84,7 @@ def extract_audio_features(
         "zcr_mean": zcr_mean[0],
         "zcr_std": zcr_std[0],
         **{f"mfccs_{i}": mfccs_mean[i] for i in range(len(mfccs_mean))},
-        **{f"mfccs_{i}": mfccs_std[i] for i in range(len(mfccs_std))},
+        **{f"mfccs_{i}_std": mfccs_std[i] for i in range(len(mfccs_std))},
     }
 
     return features, y

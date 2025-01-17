@@ -19,7 +19,18 @@ dataset_path = "data/gtzan-dataset-music-genre-classification"
 if not os.path.exists(dataset_path):
     print("Dataset not found. Downloading...")
     os.makedirs(dataset_path, exist_ok=True)
-    subprocess.run(["kaggle", "datasets", "download", "-d", "andradaolteanu/gtzan-dataset-music-genre-classification", "-p", dataset_path, "--unzip"])
+    subprocess.run(
+        [
+            "kaggle",
+            "datasets",
+            "download",
+            "-d",
+            "andradaolteanu/gtzan-dataset-music-genre-classification",
+            "-p",
+            dataset_path,
+            "--unzip",
+        ]
+    )
     print("Download complete.")
 else:
     print("Dataset already exists.")
@@ -56,7 +67,8 @@ df.sample(5)
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath('../src'))
+
+sys.path.insert(0, os.path.abspath("../src"))
 
 
 # ### Model training
@@ -65,7 +77,8 @@ sys.path.insert(0, os.path.abspath('../src'))
 
 
 from auto_audio_model import AutoAudioModel
-df_train = df.sample(100, random_state=42)
+
+df_train = df.sample(200, random_state=42)
 df_test = df.sample(100, random_state=42)
 model = AutoAudioModel()
 model.fit(df_train)
@@ -89,4 +102,3 @@ disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=np.unique(y_te
 disp.plot()
 plt.xticks(rotation=90)
 plt.show()
-

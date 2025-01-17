@@ -54,29 +54,14 @@ class AutoAudioModel:
         if not {"file_path", "label"}.issubset(data.columns):
             raise ValueError("DataFrame must contain 'file_path' and 'label' columns")
 
-        data.reset_index(drop=True, inplace=True)
-        # TODO: maybe get multiple sets of features and test on each one
-        print("Preprocessing audio files.")
-        features, audios = pre.aggregate_audio_features(data)
-        print("Finished preprocessing files.")
-        features.reset_index(drop=True, inplace=True)
-        audios.reset_index(drop=True, inplace=True)
-        # TODO: add some feature reduction maybe
-
-        labels = data["label"]
-        self.models = self._get_models(labels, random_state)
-
-        test_size = 0.2
-        indices = labels.index
-        train_indices, test_indices = train_test_split(
-            indices, test_size=test_size, random_state=random_state, shuffle=True
-        )
-        features_train = features.loc[train_indices]
-        labels_train = labels.loc[train_indices].values.reshape(-1)
-        audios_train = audios.loc[train_indices]
-        features_test = features.loc[test_indices]
-        labels_test = labels.loc[test_indices].values.reshape(-1)
-        audios_test = audios.loc[test_indices]
+        (
+            features_train,
+            labels_train,
+            audios_train,
+            features_test,
+            labels_test,
+            audios_test,
+        ) = self.prepare_datesets(data, random_state)
 
         best_accuracy = -1
         for model in self.models:
@@ -99,6 +84,40 @@ class AutoAudioModel:
         # TODO: Fine tune best model
         # TODO: Maybe use ensamble of models
 
+    def prepare_datesets(self, data, random_state):
+        data.reset_index(drop=True, inplace=True)
+        # TODO: maybe get multiple sets of features and test on each one
+        print("Preprocessing audio files.")
+        features, audios, labels = pre.aggregate_audio_features(data)
+        print("Finished preprocessing files.")
+        features.reset_index(drop=True, inplace=True)
+        audios.reset_index(drop=True, inplace=True)
+        labels.reset_index(drop=True, inplace=True)
+        # TODO: add some feature reduction maybe
+
+        self.models = self._get_models(labels, random_state)
+
+        test_size = 0.2
+        indices = labels.index
+        train_indices, test_indices = train_test_split(
+            indices, test_size=test_size, random_state=random_state, shuffle=True
+        )
+        features_train = features.loc[train_indices]
+        labels_train = labels.loc[train_indices].values.reshape(-1)
+        audios_train = audios.loc[train_indices]
+        features_test = features.loc[test_indices]
+        labels_test = labels.loc[test_indices].values.reshape(-1)
+        audios_test = audios.loc[test_indices]
+
+        return (
+            features_train,
+            labels_train,
+            audios_train,
+            features_test,
+            labels_test,
+            audios_test,
+        )
+
     def predict(self, data: pd.DataFrame) -> np.ndarray:
         """
         Make predictions on the test data.
@@ -118,7 +137,7 @@ class AutoAudioModel:
             raise ValueError("Model has not been trained")
         if "file_path" not in data.columns:
             raise ValueError("DataFrame must contain 'file_path' column")
-        features, audios = pre.aggregate_audio_features(data)
+        features, audios, _ = pre.aggregate_audio_features(data)
         if self.best_model.get_data_type() == "audio":
             return self.best_model.predict(audios)
         return self.best_model.predict(features)
