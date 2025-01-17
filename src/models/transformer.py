@@ -34,7 +34,7 @@ class AudioTransformer(AutoAudioBaseModel):
         self.id = str(uuid.uuid4())
         self.path = "outputs/transformer" + self.id
 
-    def fit(self, train_dataset):
+    def fit_from_audio(self, train_dataset):
         encoded_train_dataset = self.encode_dataset(train_dataset)
 
         training_args = TrainingArguments(
@@ -90,7 +90,7 @@ class AudioTransformer(AutoAudioBaseModel):
         )
         return encoded_dataset
 
-    def predict(self, audios: pd.DataFrame) -> np.ndarray:
+    def predict_from_audio(self, audios: pd.DataFrame) -> np.ndarray:
         predictions = []
         with torch.no_grad():
             for audio in audios["audio"]:
@@ -102,6 +102,9 @@ class AudioTransformer(AutoAudioBaseModel):
                 predicted_label = self.model.config.id2label[predicted_class_ids]
                 predictions.append(predicted_label)
         return np.array(predictions)
+
+    def get_data_type(self) -> str:
+        "audio"
 
     def __str__(self) -> str:
         return "Transformer"

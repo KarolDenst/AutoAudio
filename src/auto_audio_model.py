@@ -81,9 +81,9 @@ class AutoAudioModel:
         best_accuracy = -1
         for model in self.models:
             print(f"Training {model}")
-            if model.__class__.__name__ == "AudioTransformer":
-                model.fit(audios_train)
-                predictions = model.predict(audios_test)
+            if model.get_data_type() == "audio":
+                model.fit_from_audio(audios_train)
+                predictions = model.predict_from_audio(audios_test)
             else:
                 model.fit(features_train, labels_train)
                 predictions = model.predict(features_test)
@@ -119,6 +119,6 @@ class AutoAudioModel:
         if "file_path" not in data.columns:
             raise ValueError("DataFrame must contain 'file_path' column")
         features, audios = pre.aggregate_audio_features(data)
-        if self.best_model.__class__.__name__ == "AudioTransformer":
+        if self.best_model.get_data_type() == "audio":
             return self.best_model.predict(audios)
         return self.best_model.predict(features)
