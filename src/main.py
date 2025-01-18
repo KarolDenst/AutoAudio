@@ -18,6 +18,6 @@ data = pd.DataFrame({"file_path": file_paths, "label": labels})
 features = pre.aggregate_audio_features(data)
 
 model = AutoAudioModel()
-model.fit(data)
+model.fit(data, time_limit=500)
 predictions = model.predict(data)
 print(predictions)

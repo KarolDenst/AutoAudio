@@ -20,6 +20,7 @@ class AutoAudioModel:
         self.info = {}
         self.logging_enabled = log
         self._is_test = False
+        self._train_transformer = torch.cuda.is_available()
 
     def fit(self, data: pd.DataFrame, time_limit: int, random_state: int = 42):
         """
@@ -87,11 +88,19 @@ class AutoAudioModel:
         if self._is_test:
             return True
         n_samples = max(10, int(len(data) * 0.01))
+        coef = int(len(data)) / n_samples
         data = data.sample(n=n_samples, random_state=random_state)
         ghost_model = AutoAudioModel(log=False)
         ghost_model._is_test = True
         ghost_model.fit(data, time_limit, random_state)
-        if ghost_model.timings["total"] > time_limit / 100:
+        if ghost_model.timings["total"] > time_limit / coef:
+            if (
+                ghost_model.timings["total"]
+                - ghost_model.timings["model_training"]["Transformer"]
+                > time_limit / coef
+            ):
+                self._train_transformer = False
+                return True
             return False
         return True
 
@@ -147,7 +156,7 @@ class AutoAudioModel:
             AudioKNN(n_unique),
             AudioGB(random_state),
         ]
-        if torch.cuda.is_available():
+        if self._train_transformer:
             models.append(AudioTransformer(n_unique, label2id, id2label, random_state))
         else:
             self.log("Cuda not available. Not training transformer model.")
