@@ -54,7 +54,7 @@ class AutoAudioModel:
             )
             return
         self.models = self._get_models(dataset["labels_train"], random_state)
-        self._train_models(dataset)
+        self._train_models(dataset, time_limit - sw.elapsed_time())
 
         self.timings["total"] = sw.elapsed_time()
         # TODO: Fine tune best model
@@ -162,9 +162,10 @@ class AutoAudioModel:
             self.log("Cuda not available. Not training transformer model.")
         return models
 
-    def _train_models(self, dataset: dict[str, pd.DataFrame]):
+    def _train_models(self, dataset: dict[str, pd.DataFrame], time_limit: int):
         self.timings["model_training"] = {}
         best_accuracy = -1
+        total_sw = Stopwatch.start_new()
         for model in self.models:
             sw = Stopwatch.start_new()
             self.log(f"Training {model}")
@@ -185,6 +186,10 @@ class AutoAudioModel:
                 best_accuracy = accuracy
                 self.info["best_model"] = str(model)
                 self.info["best_accuracy"] = accuracy
+
+            if total_sw.elapsed_time() > time_limit:
+                self.log("Not enough time to train all models. Stopping now.")
+                break
 
         self.log("Finished training.")
         self.log(f"Best model is: {str(self.best_model)}")
