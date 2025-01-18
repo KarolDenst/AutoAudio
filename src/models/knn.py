@@ -8,7 +8,7 @@ class AudioKNN(AutoAudioBaseModel):
     def __init__(self, n_neighbors: int):
         self.model = KNeighborsClassifier(n_neighbors=n_neighbors)
 
-    def fit(self, features: pd.DataFrame, labels: np.ndarray):
+    def fit(self, features: pd.DataFrame, labels: pd.DataFrame):
         self.model.fit(features, labels)
 
     def predict(self, features: pd.DataFrame) -> np.ndarray:

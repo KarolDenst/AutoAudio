@@ -8,7 +8,7 @@ class AudioSVM(AutoAudioBaseModel):
     def __init__(self, random_state: int):
         self.model = SVC(random_state=random_state)
 
-    def fit(self, features: pd.DataFrame, labels: np.ndarray):
+    def fit(self, features: pd.DataFrame, labels: pd.DataFrame):
         self.model.fit(features, labels)
 
     def predict(self, features: pd.DataFrame) -> np.ndarray:
