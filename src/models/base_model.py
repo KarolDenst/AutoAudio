@@ -3,7 +3,7 @@ import numpy as np
 
 
 class AutoAudioBaseModel:
-    def fit(self, features: pd.DataFrame, labels: np.ndarray):
+    def fit(self, features: pd.DataFrame, labels: pd.DataFrame):
         """Fit the model to the training data."""
         raise NotImplementedError
 

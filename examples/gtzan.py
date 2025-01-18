@@ -81,7 +81,7 @@ from auto_audio_model import AutoAudioModel
 df_train = df.sample(200, random_state=42)
 df_test = df.sample(100, random_state=42)
 model = AutoAudioModel()
-model.fit(df_train)
+model.fit(df_train, time_limit=500)
 
 
 # In[6]:

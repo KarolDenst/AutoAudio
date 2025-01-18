@@ -34,8 +34,8 @@ class AudioTransformer(AutoAudioBaseModel):
         self.id = str(uuid.uuid4())
         self.path = "outputs/transformer" + self.id
 
-    def fit_from_audio(self, train_dataset):
-        encoded_train_dataset = self.encode_dataset(train_dataset)
+    def fit_from_audio(self, audios: pd.DataFrame):
+        encoded_train_dataset = self.encode_dataset(audios)
 
         training_args = TrainingArguments(
             output_dir=self.path,
@@ -104,7 +104,7 @@ class AudioTransformer(AutoAudioBaseModel):
         return np.array(predictions)
 
     def get_data_type(self) -> str:
-        "audio"
+        return "audio"
 
     def __str__(self) -> str:
         return "Transformer"
