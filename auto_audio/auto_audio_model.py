@@ -94,7 +94,7 @@ class AutoAudioModel:
         ghost_model._is_test = True
         ghost_model.fit(data, time_limit, random_state)
         if ghost_model.timings["total"] > time_limit / coef:
-            if (
+            if "Transformer" in ghost_model.timings["model_training"] and (
                 ghost_model.timings["total"]
                 - ghost_model.timings["model_training"]["Transformer"]
                 > time_limit / coef
