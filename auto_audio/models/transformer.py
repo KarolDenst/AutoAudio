@@ -45,7 +45,7 @@ class AudioTransformer(AutoAudioBaseModel):
             per_device_train_batch_size=32,
             gradient_accumulation_steps=4,
             per_device_eval_batch_size=32,
-            num_train_epochs=1,  # TODO: change this back to something larger like 10
+            num_train_epochs=10,
             warmup_ratio=0.1,
             logging_steps=10,
             load_best_model_at_end=True,
