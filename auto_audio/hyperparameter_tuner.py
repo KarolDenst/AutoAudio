@@ -5,7 +5,14 @@ from .models.base_model import AutoAudioBaseModel
 
 
 class HyperparameterTuner:
-    def __init__(self, search_method="random", scoring="accuracy", cv=5, random_state=42, n_iter=30):
+    def __init__(
+        self,
+        search_method="random",
+        scoring="accuracy",
+        cv=5,
+        random_state=42,
+        n_iter=30,
+    ):
         """
         Klasa pozwalająca na optymalizację hiperparametrów modelu.
 
@@ -20,7 +27,8 @@ class HyperparameterTuner:
         self.cv = cv
         self.random_state = random_state
         self.n_iter = n_iter
-    def tune(self, model : AutoAudioBaseModel, X, y) -> BaseEstimator:
+
+    def tune(self, model: AutoAudioBaseModel, X, y) -> BaseEstimator:
         """
         Optymalizuje hiperparametry modelu.
 
@@ -33,11 +41,13 @@ class HyperparameterTuner:
         Returns:
         - Najlepszy model z wybranymi hiperparametrami.
         """
-        
+
         param_ranges = model.get_param_ranges(self.search_method)
         if not param_ranges:
-            raise ValueError(f"Model {model} does not provide parameter ranges for {self.search_method} search.")
-        
+            raise ValueError(
+                f"Model {model} does not provide parameter ranges for {self.search_method} search."
+            )
+
         if self.search_method == "random":
             search = RandomizedSearchCV(
                 estimator=model.get_model(),
@@ -62,7 +72,8 @@ class HyperparameterTuner:
             )
         else:
             raise ValueError("Invalid search method. Choose 'random', or 'bayes'.")
-        
+
         search.fit(X, y)
         print(f"Best parameters found: {search.best_params_}")
         return search.best_estimator_
+
