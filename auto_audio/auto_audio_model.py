@@ -112,14 +112,12 @@ class AutoAudioModel:
         sw = Stopwatch.start_new()
 
         data.reset_index(drop=True, inplace=True)
-        # TODO: maybe get multiple sets of features and test on each one
         self.log("Preprocessing audio files.")
         features, audios, labels = pre.aggregate_audio_features(data)
         self.log("Finished preprocessing files.")
         features.reset_index(drop=True, inplace=True)
         audios.reset_index(drop=True, inplace=True)
         labels.reset_index(drop=True, inplace=True)
-        # TODO: add some feature reduction maybe
 
         test_size = 0.2
         indices = labels.index
