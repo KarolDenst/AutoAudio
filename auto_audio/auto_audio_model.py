@@ -2,7 +2,7 @@ import copy
 from typing import Optional
 import pandas as pd
 import numpy as np
-from hyperparameter_tuner import HyperparameterTuner
+from .hyperparameter_tuner import HyperparameterTuner
 from .models.base_model import AutoAudioBaseModel
 import auto_audio.preprocessing as pre
 from .models.svm import AudioSVM
