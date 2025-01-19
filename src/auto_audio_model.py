@@ -1,15 +1,19 @@
+import copy
 import pandas as pd
 import numpy as np
 from models.base_model import AutoAudioBaseModel
 import preprocessing as pre
+import torch
+from typing import Optional
+from stopwatch import Stopwatch
 from models.svm import AudioSVM
 from models.knn import AudioKNN
 from models.xgb import AudioGB
 from models.transformer import AudioTransformer
+from hyperparameter_tuner import HyperparameterTuner
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-import torch
-from stopwatch import Stopwatch
+
 
 
 class AutoAudioModel:
@@ -22,7 +26,7 @@ class AutoAudioModel:
         self._is_test = False
         self._train_transformer = torch.cuda.is_available()
 
-    def fit(self, data: pd.DataFrame, time_limit: int, random_state: int = 42):
+    def fit(self, data: pd.DataFrame, time_limit: int, tuner: Optional[HyperparameterTuner] = None, random_state: int = 42):
         """
         Fit the model to the training data.
 
@@ -30,6 +34,7 @@ class AutoAudioModel:
         data (pd.DataFrame): A DataFrame containing two columns:
             - 'file_path': The full path to the audio file.
             - 'label': The label associated with the audio file.
+        tuner (HyperparameterTuner): The tuner to use for hyperparameter optimization.
         time_limit (int): The time limit for training the model (in seconds).
         random_state (int): The random state for reproducibility.
 
@@ -54,11 +59,9 @@ class AutoAudioModel:
             )
             return
         self.models = self._get_models(dataset["labels_train"], random_state)
-        self._train_models(dataset, time_limit - sw.elapsed_time())
+        self._train_models(dataset, int(time_limit - sw.elapsed_time()), tuner)
 
         self.timings["total"] = sw.elapsed_time()
-        # TODO: Fine tune best model
-        # TODO: Maybe use ensamble of models
 
     def predict(self, data: pd.DataFrame) -> np.ndarray:
         """
@@ -92,7 +95,7 @@ class AutoAudioModel:
         data = data.sample(n=n_samples, random_state=random_state)
         ghost_model = AutoAudioModel(log=False)
         ghost_model._is_test = True
-        ghost_model.fit(data, time_limit, random_state)
+        ghost_model.fit(data, time_limit, None, random_state)
         if ghost_model.timings["total"] > time_limit / coef:
             if (
                 ghost_model.timings["total"]
@@ -162,11 +165,13 @@ class AutoAudioModel:
             self.log("Cuda not available. Not training transformer model.")
         return models
 
-    def _train_models(self, dataset: dict[str, pd.DataFrame], time_limit: int):
+    def _train_models(self, dataset: dict[str, pd.DataFrame], time_limit: int, tuner: Optional[HyperparameterTuner]):
         self.timings["model_training"] = {}
         best_accuracy = -1
         total_sw = Stopwatch.start_new()
         for model in self.models:
+            best_model_of_type_accuracy = -1
+            best_model_of_type = None
             sw = Stopwatch.start_new()
             self.log(f"Training {model}")
             self.info["model_accuracies"] = {}
@@ -180,12 +185,34 @@ class AutoAudioModel:
             self.info["model_accuracies"][str(model)] = accuracy
             self.log(f"{model} achieved {accuracy * 100}% accuracy.")
             self.timings["model_training"][str(model)] = sw.elapsed_time()
-
-            if accuracy > best_accuracy:
-                self.best_model = model
-                best_accuracy = accuracy
-                self.info["best_model"] = str(model)
-                self.info["best_accuracy"] = accuracy
+            if tuner is not None:
+                self.log("Tuning model hyperparameters.")
+                tuned_estimator = tuner.tune(
+                    model, dataset["features_train"], dataset["labels_train"]
+                )
+                tuned_model = copy.deepcopy(model)
+                tuned_model.set_params(**tuned_estimator.get_params())
+                tuned_model.fit(dataset["features_train"], dataset["labels_train"])
+                    
+                tuned_predictions = tuned_model.predict(dataset["features_test"])
+                tuned_accuracy = accuracy_score(dataset["labels_test"], tuned_predictions)
+                self.log(f"Tuned {model} achieved {tuned_accuracy * 100}% accuracy.")
+                    
+                if tuned_accuracy > accuracy:
+                    best_model_of_type = tuned_model
+                    best_model_of_type_accuracy = tuned_accuracy
+                else:
+                    self.log(f"Tuning did not improve {model}. Keeping original.")
+                    best_model_of_type = model
+                    best_model_of_type_accuracy = accuracy
+            else:
+                best_model_of_type = model
+                best_model_of_type_accuracy = accuracy
+                
+            if best_model_of_type_accuracy > best_accuracy:
+                self.best_model = best_model_of_type
+                best_accuracy = best_model_of_type_accuracy
+                self.info["best_accuracy"] = best_model_of_type_accuracy
 
             if total_sw.elapsed_time() > time_limit:
                 self.log("Not enough time to train all models. Stopping now.")

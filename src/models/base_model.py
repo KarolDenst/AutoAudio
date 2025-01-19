@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sklearn.base import BaseEstimator
 
 
 class AutoAudioBaseModel:
@@ -21,6 +22,19 @@ class AutoAudioBaseModel:
 
     def get_data_type(self) -> str:
         return "features"
+    
+    def get_param_ranges(self, search_method: str):
+        """Get the hyperparameter search space."""
+        raise NotImplementedError
+    
+    def get_model(self):
+        """Retrieve the underlying model."""
+        raise NotImplementedError
+    
+    def set_params(self, **params):
+        """
+        Set parameters directly on the underlying model.
+        """
 
     def __str__(self) -> str:
         return "Base Model"
