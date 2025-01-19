@@ -182,9 +182,9 @@ class AutoAudioModel:
                 predictions = model.predict(dataset["features_test"])
             accuracy = accuracy_score(dataset["labels_test"], predictions)
             self.info["model_accuracies"][str(model)] = accuracy
-            self.log(f"{model} achieved {accuracy * 100}% accuracy.")
+            self.log(f"{model} achieved {round(accuracy * 100, 1)}% accuracy.")
             self.timings["model_training"][str(model)] = sw.elapsed_time()
-            if tuner is not None:
+            if tuner is not None and model is not AudioTransformer:
                 self.log("Tuning model hyperparameters.")
                 tuned_estimator = tuner.tune(
                     model, dataset["features_train"], dataset["labels_train"]
@@ -195,7 +195,7 @@ class AutoAudioModel:
                     
                 tuned_predictions = tuned_model.predict(dataset["features_test"])
                 tuned_accuracy = accuracy_score(dataset["labels_test"], tuned_predictions)
-                self.log(f"Tuned {model} achieved {tuned_accuracy * 100}% accuracy.")
+                self.log(f"Tuned {model} achieved {round(tuned_accuracy * 100, 1)}% accuracy.")
                     
                 if tuned_accuracy > accuracy:
                     best_model_of_type = tuned_model
