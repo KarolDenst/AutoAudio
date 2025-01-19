@@ -1,12 +1,12 @@
-from models.base_model import AutoAudioBaseModel
-from sklearn.neighbors import KNeighborsClassifier
+from .base_model import AutoAudioBaseModel
+from sklearn.svm import SVC
 import pandas as pd
 import numpy as np
 
 
-class AudioKNN(AutoAudioBaseModel):
-    def __init__(self, n_neighbors: int):
-        self.model = KNeighborsClassifier(n_neighbors=n_neighbors)
+class AudioSVM(AutoAudioBaseModel):
+    def __init__(self, random_state: int):
+        self.model = SVC(random_state=random_state)
 
     def fit(self, features: pd.DataFrame, labels: pd.DataFrame):
         self.model.fit(features, labels)
@@ -17,4 +17,4 @@ class AudioKNN(AutoAudioBaseModel):
         return predictions
 
     def __str__(self) -> str:
-        return "KNN"
+        return "SVM"
