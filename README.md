@@ -208,3 +208,18 @@ Model głębokiego uczenia oparty na architekturze wav2vec2 opracowanej przez Fa
 - Monitorowanie użycia pamięci dla dużych zbiorów danych.
 - Uwzględnienie dostępności GPU przy wyborze modelu transformer.
 - Używanie odpowiednich rozmiarów batch dla posiadanego sprzętu.
+
+
+## Dodatkowe pliki i przykłady użycia 
+W katalogu `examples` znajdują się trzy notatniki Jupyter, które prezentują różne zastosowania i funkcjonalności paczki:
+
+1. `audio_mnist.ipynb`
+
+Zawiera pełny przepływ wykorzystania paczki na zbiorze danych Audio MNIST. Znajduje się tam demonstracja załadowania danych, przeprowadzenia treningu modelu oraz przedstawienie jak dokonać predykcji.
+
+2. `gtzan.ipynb`
+
+Podobnie jak w przypadku Audio MNIST, ten notatnik prezentuje pełny przepływ pracy na zbiorze danych GTZAN, który jest popularnym zbiorem do klasyfikacji gatunków muzycznych. Pokazuje, jak skonfigurować modele oraz przeprowadzić analizę wyników.
+
+3. `comparison.ipynb`
+Pliku tym znajduje się porównanie działania stworzonej paczki z pyAudioAnalysis. Zawiera porównanie użycia obu bibliotek oraz wyniki testów, które pozwalają ocenić różnice w wydajności i dokładności pomiędzy obiema bibliotekami.
