@@ -1,7 +1,7 @@
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
 from skopt import BayesSearchCV
-from models.base_model import AutoAudioBaseModel
+from .models.base_model import AutoAudioBaseModel
 
 
 class HyperparameterTuner:
