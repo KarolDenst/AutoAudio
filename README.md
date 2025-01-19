@@ -215,11 +215,12 @@ W katalogu `examples` znajdują się trzy notatniki Jupyter, które prezentują 
 
 1. `audio_mnist.ipynb`
 
-Zawiera pełny przepływ wykorzystania paczki na zbiorze danych Audio MNIST. Znajduje się tam demonstracja załadowania danych, przeprowadzenia treningu modelu oraz przedstawienie jak dokonać predykcji.
+    Zawiera pełny przepływ wykorzystania paczki na zbiorze danych Audio MNIST. Znajduje się tam demonstracja załadowania danych, przeprowadzenia treningu modelu oraz przedstawienie jak dokonać predykcji.
 
 2. `gtzan.ipynb`
 
-Podobnie jak w przypadku Audio MNIST, ten notatnik prezentuje pełny przepływ pracy na zbiorze danych GTZAN, który jest popularnym zbiorem do klasyfikacji gatunków muzycznych. Pokazuje, jak skonfigurować modele oraz przeprowadzić analizę wyników.
+    Podobnie jak w przypadku Audio MNIST, ten notatnik prezentuje pełny przepływ pracy na zbiorze danych GTZAN, który jest popularnym zbiorem do klasyfikacji gatunków muzycznych. Pokazuje, jak skonfigurować modele oraz przeprowadzić analizę wyników.
 
 3. `comparison.ipynb`
-Pliku tym znajduje się porównanie działania stworzonej paczki z pyAudioAnalysis. Zawiera porównanie użycia obu bibliotek oraz wyniki testów, które pozwalają ocenić różnice w wydajności i dokładności pomiędzy obiema bibliotekami.
+
+    W pliku tym znajduje się porównanie działania stworzonej paczki z pyAudioAnalysis. Zawiera porównanie użycia obu bibliotek oraz wyniki testów, które pozwalają ocenić różnice w wydajności i dokładności pomiędzy obiema bibliotekami.
