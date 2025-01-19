@@ -1,19 +1,18 @@
 import copy
+from typing import Optional
 import pandas as pd
 import numpy as np
-from models.base_model import AutoAudioBaseModel
-import preprocessing as pre
-import torch
-from typing import Optional
-from stopwatch import Stopwatch
-from models.svm import AudioSVM
-from models.knn import AudioKNN
-from models.xgb import AudioGB
-from models.transformer import AudioTransformer
 from hyperparameter_tuner import HyperparameterTuner
+from .models.base_model import AutoAudioBaseModel
+import auto_audio.preprocessing as pre
+from .models.svm import AudioSVM
+from .models.knn import AudioKNN
+from .models.xgb import AudioGB
+from .models.transformer import AudioTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-
+import torch
+from auto_audio.stopwatch import Stopwatch
 
 
 class AutoAudioModel:

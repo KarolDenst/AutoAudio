@@ -1,4 +1,4 @@
-from models.base_model import AutoAudioBaseModel
+from .base_model import AutoAudioBaseModel
 from sklearn.ensemble import GradientBoostingClassifier
 from skopt.space import Integer, Real
 import pandas as pd

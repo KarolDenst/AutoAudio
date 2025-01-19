@@ -1,4 +1,4 @@
-from models.base_model import AutoAudioBaseModel
+from .base_model import AutoAudioBaseModel
 from sklearn.svm import SVC
 import pandas as pd
 import numpy as np
