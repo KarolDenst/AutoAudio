@@ -1,4 +1,4 @@
-from models.base_model import AutoAudioBaseModel
+from .base_model import AutoAudioBaseModel
 import evaluate
 import torch
 from transformers import (
