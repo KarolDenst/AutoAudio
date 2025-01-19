@@ -1,5 +1,6 @@
 import preprocessing as pre
 from auto_audio_model import AutoAudioModel
+from hyperparameter_tuner import HyperparameterTuner
 import os
 import pandas as pd
 
@@ -18,6 +19,7 @@ data = pd.DataFrame({"file_path": file_paths, "label": labels})
 features = pre.aggregate_audio_features(data)
 
 model = AutoAudioModel()
-model.fit(data, time_limit=500)
+tuner = HyperparameterTuner()
+model.fit(data, 500, tuner)
 predictions = model.predict(data)
 print(predictions)
