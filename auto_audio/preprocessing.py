@@ -43,7 +43,10 @@ def aggregate_audio_features(
         index=pd.Index(valid_filenames),
     ).dropna(axis=1, how="all")  # Drop 'label' if it wasn't included
 
-    labels = file_df[file_df["file_path"].isin(valid_filenames)]["label"]
+    if "label" in file_df.columns:
+        labels = file_df[file_df["file_path"].isin(valid_filenames)]["label"]
+    else:
+        labels = pd.DataFrame()
     return df, audios, labels
 
 
