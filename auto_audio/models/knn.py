@@ -13,8 +13,28 @@ class AudioKNN(AutoAudioBaseModel):
 
     def predict(self, features: pd.DataFrame) -> np.ndarray:
         predictions = self.model.predict(features)
-
         return predictions
+    
+    def get_model(self):
+        return self.model
+    
+    def get_param_ranges(self, search_method: str):
+        if search_method == "random":
+            return {
+                "n_neighbors": [3, 5, 7, 9, 11],
+                "weights": ["uniform", "distance"],
+                "metric": ["euclidean", "manhattan", "minkowski"],
+            }
+        elif search_method == "bayes":
+            return {
+                "n_neighbors": (3, 11),
+                "weights": ["uniform", "distance"],
+                "metric": ["euclidean", "manhattan", "minkowski"],
+            }
+            
+    def set_params(self, **params):
+
+        self.model.set_params(**params)
 
     def __str__(self) -> str:
         return "KNN"
