@@ -171,4 +171,6 @@ data/
 outputs/
 examples/data/
 examples/outputs/
+examples/svmSMtemp
+examples/svmSMtempMEANS
 test/
